@@ -1,0 +1,191 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>RTA Demo - jsFiddle demo</title>
+  
+  
+  <script type='text/javascript' src='//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.1/angular.js'></script>
+  
+  
+  
+  
+  <link rel="stylesheet" type="text/css" href="/css/result-light.css">
+  
+    
+      <link rel="stylesheet" type="text/css" href="http://l-lin.github.io/font-awesome-animation/vendor/font-awesome/css/font-awesome.min.css">
+    
+  
+    
+      <link rel="stylesheet" type="text/css" href="http://l-lin.github.io/font-awesome-animation/dist/font-awesome-animation.min.css">
+    
+  
+  <style type='text/css'>
+    
+  </style>
+  
+
+
+
+<script type='text/javascript'>//<![CDATA[
+
+var app = angular.module('app', []);
+
+app.directive('infomanager', function (testService) {
+    return {
+        controller: function ($scope) {
+            $scope.attributes = [];
+            $scope.usertodos = [];
+            this.scope = $scope;
+            testService.getJSON('users').then(function (data) {
+                $scope.users = data;
+                //console.log('infomanager:' + $scope.users);   
+                //console.log('infomanager:usertodos' + $scope.usertodos);
+            });
+            $scope.getData= function(){
+                $scope.usertodos["1"].todo = "test app 1";
+                $scope.usertodos["2"].todo = "test app 2";
+                $scope.usertodos["3"].todo = "test app 3";
+                $scope.usertodos["4"].todo = "test app 4";
+                $scope.usertodos["5"].todo = "test app 5";
+            };
+        }
+        
+    };
+});
+
+app.directive('usertodos', function ($compile) {
+    return {
+        restrict: 'A',
+        replace: true,
+        require: '^infomanager',
+        //scope: {},
+        //template: '<span>{{usertodo.todo}}</span>',
+        link: function (scope, element, attrs, infoManager) {
+            infoManager.scope.usertodos[attrs.uid] = {
+                id: attrs.uid,
+                todo: '<i class="fa fa-gear faa-spin animated"></i>'
+            };
+            scope.usertodo = infoManager.scope.usertodos[attrs.uid];
+            //console.debug(scope.usertodo);            
+            console.debug(infoManager.scope.usertodos);
+            //console.debug(attrs.uid);
+            //scope.usertodo = {id:1, todo:'mytask'};
+            var newhtml = 'usertodo.todo';
+
+            scope.$watch(newhtml, function (html) {
+                element.html(html);
+                $compile(element.contents())(scope);
+            });
+        }
+    }
+});
+
+/*
+app.directive('info', ['$timeout', function ($timeout) {
+    return {
+        require: '^infomanager',
+        scope: {
+            info: '=info'
+        },
+        link: function (scope, element, attrs, infoManager) {
+            //console.debug(attrs);
+            //console.debug(infoManager.scope.attributes);
+            element.on(attrs.infoevent, function () {
+                // timeout is needed because the focus event fires during already active $digest
+                $timeout(function () {
+                    infoManager.scope.info = scope.info;
+                    scope.$apply(); // trigger new $digest to process new model value
+                });
+            });
+        }
+    };
+}]);
+
+app.directive('showinfo', function () {
+    return {
+        template: '{{info}}',
+        require: '^infomanager'
+    }
+});
+*/
+
+app.directive('realtimebinding', function () {
+    return {
+        require: '^infomanager',
+        scope: {},
+        template: '{{attribute.zip}}',
+        link: function (scope, element, attrs, infoManager) {
+            infoManager.scope.attributes[attrs.aid] = {
+                name: attrs.aid,
+                zip: attrs.mid
+            };
+            scope.attribute = infoManager.scope.attributes[attrs.aid];
+            //console.debug(infoManager.scope.attributes);
+        }
+    }
+});
+
+
+app.service('testService', function ($rootScope, $http, $q) {
+    this.getJSON = function (resource) {
+        // Setup a defered
+        var deferred = $q.defer();
+        $http.get('http://jsonplaceholder.typicode.com/' + resource).
+        success(function (data) {
+            // Resolve the promise with the data
+            deferred.resolve(data);
+        }).
+        error(function (data, status, headers, config) {
+            // Something bad happened
+            deferred.reject(status + " | bad");
+        });
+        // Return a promise that they will eventually get something back
+        return deferred.promise;
+    };
+});
+//]]> 
+
+</script>
+
+</head>
+<body>
+  <i class="fa fa-gear faa-spin animated"></i> Getting started
+<div ng-app="app" infomanager>
+    <button ng-click="getData()">get data</button>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>email</th>
+            <th>todo</th>
+        </tr>
+        <tr ng-repeat="user in users">
+            <td>{{user.name}}</td>
+            <td>{{user.email}}</td>
+            <td><span userTodos data-uid='{{user.id}}'></span>
+            </td>
+        </tr>
+    </table>
+    <span ng-repeat="u in usertodos">
+        {{u.todo}}
+    </span>
+    <br/>
+    <br/>
+    <!--<input type="text" info="'Insert what you call your pet'" infoEvent="focus"></input>
+    <input type="text" info="'Describe your pet!'" infoEvent="focus"></input>
+    <p>hint: <span showinfo></span>
+    </p>-->office zip code
+    <input type="text" ng-model="attributes['office'].zip"></input>
+    <br/>office zip code-child directive<span data-aid="office" data-mid="10001" realTimeBinding></span>
+
+    <br/>
+    <input type="text" ng-model="attributes['home'].zip"></input>
+    <br/>home zip code-child directive<span data-aid="home" data-mid="10002" realtimebinding></span>
+
+</div>
+  
+</body>
+
+</html>
+
